@@ -1,0 +1,98 @@
+body {
+    background: white;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Views */
+
+.view {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    top: 0px;
+    left: 0px;
+    position: fixed;
+    overflow: hidden;
+}
+
+.view.active-view {
+    display: grid;
+}
+
+/* Create Project View */
+
+#create-project {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+/* Project View */
+
+#project-view {
+    grid-template-columns: 1fr 3fr;
+    grid-template-rows: 30px 1fr 18px;
+    grid-template-areas: "files-header tabs"
+                         "files        editor"
+                         "files        editor-extras";
+}
+
+#files-header {
+    grid-area: files-header;
+}
+
+#files-header h3 {
+    margin: 0px 8px;
+    line-height: 30px;
+}
+
+#files {
+    grid-area: files;
+}
+
+.file-entry {
+    display: block;
+    margin-left: 30px;
+    cursor: pointer;
+}
+
+.file-entry.file::before {
+    content: "\1F9CA"; /* TODO */
+}
+
+.file-entry.folder::before {
+    content: "\25B6"; /* Triangle */
+}
+
+#tabs {
+    grid-area: tabs;
+}
+
+.tab {
+    display: inline-block;
+    border: 1px solid black;
+    padding: 5px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+#editor {
+    grid-area: editor;
+}
+
+#editor iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+#editor-extras {
+    grid-area: editor-extras;
+    text-align: right;
+    padding-right: 20px;
+}
+
+#editor-extras span {
+    font-size: 13px;
+    line-height: 18px;
+    margin: 0px 8px;
+}

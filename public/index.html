@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+
+    <title>Hello World!</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    
+    <script>require("../dist/index.js");</script>
+    <link rel="stylesheet" href="style.css">
+    <style id="theme"></style>
+</head>
+
+<body>
+    <div id="views">
+        <div class="view active-view" id="create-project">
+            <div>
+                <div class="form-part">
+                    <label for="create-project-name">Pack Name</label>
+                    <input type="text" id="create-project-name">
+                </div>
+                <div class="form-part">
+                    <label for="create-project-version">Pack Format</label>
+                    <select id="create-project-version">
+                        <option selected value="6">6 (1.16.2-1.16.5)</option>
+                        <option value="5">5 (1.15-1.16.1)</option>
+                        <option value="4">4 (1.13-1.14.4)</option>
+                        <option value="3">3 (1.11-1.12.2)</option>
+                        <option value="2">2 (1.9-1.10.2)</option>
+                        <option value="1">1 (1.6.1-1.8.9)</option>
+                    </select>
+                </div>
+                <div class="form-part">
+                    <label for="create-project-location">Location</label>
+                    <input type="text" id="create-project-location">
+                    <button id="create-project-location-change">Change</button>
+                    <br>
+                    <span>A new folder will be created inside this folder</span>
+                </div>
+            </div>
+        </div>
+        <div class="view" id="project-view">
+            <div id="files-header">
+                <h3>Files</h3>
+            </div>
+            <div id="files"></div>
+            <div id="tabs"></div>
+            <div id="editor"></div>
+            <div id="editor-extras">
+                <span id="editor-extras-indentation"></span>
+                <span id="editor-extras-eol"></span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

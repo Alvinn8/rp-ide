@@ -1,0 +1,20 @@
+{
+  "name": "rp-ide",
+  "version": "0.1.0",
+  "description": "An IDE for creating resource packs",
+  "main": "main.js",
+  "scripts": {
+    "start": "tsc && electron ."
+  },
+  "author": "Alvin",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/ejs": "^3.0.6",
+    "@types/extract-zip": "^1.6.2",
+    "electron": "^11.2.3",
+    "typescript": "^4.1.5"
+  },
+  "dependencies": {
+    "monaco-editor": "^0.22.3"
+  }
+}
