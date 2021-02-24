@@ -1,2 +1,2 @@
 # rp-ide
-An IDE for creating resource packs
+An IDE for creating minecraft resource packs
