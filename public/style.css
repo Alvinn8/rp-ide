@@ -29,7 +29,7 @@ body {
 /* Project View */
 
 #project-view {
-    grid-template-columns: 1fr 3fr;
+    grid-template-columns: 1fr 2fr;
     grid-template-rows: 30px 1fr 18px;
     grid-template-areas: "files-header tabs"
                          "files        editor"
@@ -47,20 +47,60 @@ body {
 
 #files {
     grid-area: files;
+    overflow: auto;
+    padding-left: 25px;
+    position: relative;
 }
 
 .file-entry {
     display: block;
-    margin-left: 30px;
     cursor: pointer;
 }
 
-.file-entry.file::before {
-    content: "\1F9CA"; /* TODO */
+.file-entry::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark.svg);
+    margin-left: -22px;
+    margin-top: 5px;
+}
+.file-entry:hover::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-fill.svg);
+}
+.file-entry.folder::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/caret-right-fill.svg);
+}
+.file-entry.folder.open::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/caret-down-fill.svg);
+}
+.file-entry.file-json::before {
+    background-image: url(img/file-earmark-json.svg);
+}
+.file-entry.file-json:hover::before {
+    background-image: url(img/file-earmark-json-fill.svg);
+}
+.file-entry.file-text::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-text.svg);
+}
+.file-entry.file-text:hover::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-text-fill.svg);
+}
+.file-entry.file-image::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-image.svg);
+}
+.file-entry.file-image:hover::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-image-fill.svg);
 }
 
-.file-entry.folder::before {
-    content: "\25B6"; /* Triangle */
+.subdir {
+    display: none;
+    margin-left: 20px;
+}
+
+.folder.open > .subdir {
+    display: block;
 }
 
 #tabs {

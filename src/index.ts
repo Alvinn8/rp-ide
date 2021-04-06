@@ -1,13 +1,9 @@
 import * as path from "path";
-import * as test from "electron";
 import { remote as electron } from "electron";
 import Project from "./project/project";
-import TextTab from "./project/tab/textTab";
 import { showView } from "./views";
-import { ensureEditorLoaded } from "./editorUtil";
 import * as themes from "./themes";
-
-console.log(test);
+import { setCurrentProject } from "./variables";
 
 window.addEventListener("DOMContentLoaded", async function() {
     const minecraftDirName = process.platform === "win32" ? ".minecraft" : "minecraft";
@@ -28,11 +24,14 @@ window.addEventListener("DOMContentLoaded", async function() {
     themes.update();
     
     (async function() {
+        // return;
         showView("project-view");
         
         const project = new Project("/Users/Alvin/Library/Application Support/minecraft/resourcepacks/SVCraftVehicles");
         
         await project.renderFiles();
+
+        setCurrentProject(project);
 
         // @ts-ignore
         window["project"] = project;

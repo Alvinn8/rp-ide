@@ -6,6 +6,22 @@ import * as path from "path";
 import { makeElement } from "../../util";
 import Project from "../project";
 
+const extraFileExtentions: {[key: string]: string} = {
+    ".mcmeta": "json",
+    ".bbmodel": "json"
+};
+
+/**
+ * Get a language by file extention. This will only detect languages that
+ * the monaco editor can not detect. Will return undefined if no language
+ * was detected, in that case monaco will auto detect from the uri.
+ * 
+ * @param ext The file extention.
+ */
+function getLanguage(ext: string): string | undefined {
+    return extraFileExtentions[ext];
+}
+
 /**
  * A tab representing a text file.
  */
@@ -25,7 +41,7 @@ export default class TextTab implements Tab {
         await editorUtil.ensureEditorLoaded();
         const value = await fs.promises.readFile(this.filePath, "utf-8");
         const monaco = editorUtil.getMonaco();
-        this.model = monaco.editor.createModel(value, undefined, monaco.Uri.file(this.filePath));
+        this.model = monaco.editor.createModel(value, getLanguage(path.extname(this.filePath)), monaco.Uri.file(this.filePath));
         this.model.setEOL(value.includes("\r\n") ? monaco.editor.EndOfLineSequence.CRLF : monaco.editor.EndOfLineSequence.LF);
         console.log("Using "+ this.model.getEOL().replace('\r', '\\r').replace('\n', '\\n') + " as line endings");
         this.model.detectIndentation(true, 4);

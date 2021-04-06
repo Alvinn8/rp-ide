@@ -1,5 +1,6 @@
 import type * as monaco from "monaco-editor";
 import * as themes from "./themes";
+import { getCurrentProject } from "./variables";
 
 let windowMonaco: typeof monaco;
 let editor: monaco.editor.IStandaloneCodeEditor;
@@ -20,6 +21,10 @@ export async function loadEditor(): Promise<monaco.editor.IStandaloneCodeEditor>
             editor = iframe.contentWindow.editor;
 
             themes.update();
+            const project = getCurrentProject();
+            if (project != null) {
+                project.setupEditorIntelligence();
+            }
 
             resolve(editor as monaco.editor.IStandaloneCodeEditor);
         };
