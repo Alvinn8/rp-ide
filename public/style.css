@@ -3,6 +3,28 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
+#processesContainer {
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+}
+
+.process {
+    min-width: 150px;
+    height: 100px;
+    transition: top 1s;
+}
+/*
+#contextmenu {
+    position: fixed;
+    min-width: 100px;
+    min-height: 100px;
+    background-color: rgb(230, 230, 230, 0.9);
+    background: lime;
+    color: black;
+}
+*/
+
 /* Views */
 
 .view {
@@ -70,10 +92,13 @@ body {
     background-image: url(../node_modules/bootstrap-icons/icons/file-earmark-fill.svg);
 }
 .file-entry.folder::before {
+    background-image: url(../node_modules/bootstrap-icons/icons/caret-right.svg);
+}
+.file-entry.folder:hover::before {
     background-image: url(../node_modules/bootstrap-icons/icons/caret-right-fill.svg);
 }
 .file-entry.folder.open::before {
-    background-image: url(../node_modules/bootstrap-icons/icons/caret-down-fill.svg);
+    background-image: url(../node_modules/bootstrap-icons/icons/caret-down.svg);
 }
 .file-entry.file-json::before {
     background-image: url(img/file-earmark-json.svg);

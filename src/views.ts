@@ -1,4 +1,4 @@
-export type View = "create-project" | "project-view";
+export type View = "welcome" | "create-project" | "project-view";
 
 export function showView(view: View) {
     const views = document.getElementsByClassName("view");

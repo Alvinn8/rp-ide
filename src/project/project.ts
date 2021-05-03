@@ -1,20 +1,49 @@
 import * as fs from "fs";
 import * as path from "path";
+import { ContextMenu } from "../contextmenu";
 import * as editorUtil from "../editorUtil";
+import PackFormat, { getPackFormat } from "../packFormats";
 import { makeElement } from "../util";
+import { updateAllProjectsJson, updateProjectJson } from "./projects";
 import Tab from "./tab/tab";
 import TextTab from "./tab/textTab";
+import * as dialog from "../dialog";
+import { shell } from "electron";
+
+export interface ProjectInfo {
+    rootDir: string;
+    packFormat: number;
+    name: string;
+    lastOpened: string;
+}
+
+export interface ShortProjectInfo {
+    name: string;
+    lastOpened: string;
+    hash: string;
+}
 
 export default class Project {
     private rootDir: string;
+    private packFormat: PackFormat;
+    private name: string;
     private tabs: Tab[] = [];
     private currentTab?: Tab;
 
-    constructor(rootDir: string) {
-        this.rootDir = rootDir;
+    constructor(info: ProjectInfo) {
+        this.rootDir = info.rootDir;
+        this.name = info.name;
+
+        const packFormat = getPackFormat(info.packFormat);
+        if (packFormat == null) throw new Error(`Can not find pack format for: "${info.packFormat}"`);
+        this.packFormat = packFormat;
+
         if (editorUtil.isEditorLoaded()) {
             this.setupEditorIntelligence();
         }
+
+        updateAllProjectsJson(this);
+        updateProjectJson(this);
     }
 
     public getRootDir(): string {
@@ -35,6 +64,107 @@ export default class Project {
             if (tab.getFilePath() == filePath) return tab;
         }
         return null;
+    }
+
+    public getPackFormat(): PackFormat {
+        return this.packFormat;
+    }
+
+    public getName(): string {
+        return this.name;
+    }
+
+    public getProjectInfo(): ProjectInfo {
+        return {
+            rootDir: this.rootDir,
+            packFormat: this.packFormat.packFormat,
+            lastOpened: new Date().toJSON(),
+            name: this.name
+        };
+    }
+
+    /**
+     * Called when a context menu is triggered in the files view.
+     * 
+     * @param e The event that triggered the context menu
+     * @param path_ The path of the file or folder that was clicked.
+     * @param isFile Whether the click entry is a file
+     * @param isDirectory Whether the click entry is a directory
+     */
+    public onFilesContextmenu(e: MouseEvent, path_: string, isFile: boolean, isDirectory: boolean) {
+        const contextmenu = new ContextMenu();
+        contextmenu.addEntry({
+            name: "Test",
+            onclick: function(e: MouseEvent) {
+                shell.beep();
+            }
+        });
+        if (isDirectory) {
+            contextmenu.setCategoryPriority("new", 10);
+            contextmenu.addEntry("new", {
+                name: "New File",
+                onclick: (e: MouseEvent) => {
+                    dialog.prompt("Create new file", "Enter the name and extention of the file to create.", name => {
+                        const filePath = path.resolve(path_, name);
+                        fs.promises.access(filePath).then(function() {
+                            dialog.info("Error", "That file already exists.");
+                        }).catch(() => {
+                            fs.promises.writeFile(filePath, Buffer.alloc(0)).then(() => {
+                                this.renderFiles();
+                            }).catch(function(err) {
+                                dialog.info("Unexpected Error", err.toString());
+                                throw err;
+                            });
+                        });
+                    });
+                }
+            });
+            contextmenu.addEntry("new", {
+                name: "New Folder",
+                onclick: (e: MouseEvent) => {
+                    dialog.prompt("Create new folder", "Enter the name of the folder to create.", name => {
+                        fs.promises.mkdir(path.resolve(path_, name)).then(() => {
+                            this.renderFiles();
+                        }).catch(function(err) {
+                            if (err.code == 'EEXIST') {
+                                dialog.info("Error", "That folder already exists.");
+                            } else {
+                                dialog.info("Unexpected Error", err.toString());
+                                throw err;
+                            }
+                        });
+                    });
+                }
+            });
+        }
+        if (isFile) {
+            contextmenu.addEntry({
+                name: "View in " + (process.platform == "darwin" ? "Finder" : "File Explorer"),
+                onclick: (e: MouseEvent) => {
+                    shell.showItemInFolder(path_);
+                }
+            });
+            contextmenu.addEntry({
+                name: "Open with default external program",
+                onclick: (e: MouseEvent) => {
+                    shell.openPath(path_);
+                }
+            });
+        }
+        contextmenu.addEntry({
+            name: "Delete",
+            onclick: (e: MouseEvent) => {
+                const success = shell.moveItemToTrash(path_);
+                if (success) {
+                    this.renderFiles();
+                } else {
+                    dialog.info("Unexpected Error", "Failed to move the file/folder to the trash.");
+                }
+            }
+        });
+
+
+        contextmenu.render(e.clientX, e.clientY);
     }
 
     private async renderFolder(folderPath: string, container: HTMLElement) {
@@ -73,13 +203,17 @@ export default class Project {
             const filePath = path.resolve(folderPath, entry);
             const stat = await fs.promises.stat(filePath);
             const element = makeElement({
-                tag: "span",
-                className: "file-entry " + (stat.isDirectory() ? "folder" : (stat.isFile() ? "file" : "unknown")),
-                textContent: entry
+                tag: "div",
+                className: "file-entry " + (stat.isDirectory() ? "folder" : (stat.isFile() ? "file" : "unknown"))
             });
+            element.appendChild(makeElement({
+                tag: "span",
+                textContent: entry
+            }));
             switch (path.extname(filePath)) {
                 case ".json":
                 case ".mcmeta":
+                case ".bbmodel":
                     element.classList.add("file-json");
                     break;
                 case ".txt":
@@ -90,6 +224,8 @@ export default class Project {
                     break;
             }
             element.setAttribute("data-path", filePath);
+            if (stat.isFile()) element.setAttribute("data-is-file", "true");
+            if (stat.isDirectory()) element.setAttribute("data-is-directory", "true");
             if (stat.isFile()) {
                 element.addEventListener("click", async function() {
                     const path = this.getAttribute("data-path");
@@ -105,7 +241,7 @@ export default class Project {
                 });
             } else if (stat.isDirectory()) {
                 element.addEventListener("click", async function(e: MouseEvent) {
-                    if (!(e.composedPath()[0] == this)) return;
+                    if (!(e.composedPath()[0] == this) && !(e.composedPath()[1] == this)) return;
 
                     const path = this.getAttribute("data-path");
                     if (path == null) throw new Error("No data-path attribute on folder.");
@@ -121,6 +257,17 @@ export default class Project {
                     this.classList.toggle("open");
                 });
             }
+            const project = this;
+            element.addEventListener("contextmenu", function(e: MouseEvent) {
+                e.preventDefault();
+                if (!(e.composedPath()[0] == this) && !(e.composedPath()[1] == this)) return;
+
+                const path = this.getAttribute("data-path");
+                if (path == null) throw new Error("No data-path attribute on folder.");
+                const isFile = this.getAttribute("data-is-file") == "true";
+                const isDirectory = this.getAttribute("data-is-directory") == "true";
+                project.onFilesContextmenu(e, path, isFile, isDirectory);
+            });
             container?.appendChild(element);
         }
     }
@@ -128,6 +275,7 @@ export default class Project {
     public async renderFiles() {
         const container = document.getElementById("files");
         if (container == null) throw new Error("Can not render files before the document has loaded.");
+        container.innerHTML = "";
         this.renderFolder(this.rootDir, container);
     }
 

@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import "extract-zip";
 import extract = require("extract-zip");
+import Process from "./process";
 
 /**
  * The directory where the cached vanilla assets are stored.
@@ -54,6 +55,8 @@ export default class VanillaAssets {
      * Extract the assets from the game and store them.
      */
     public async extract() {
+        const processBar = new Process("Extracting vanilla assets for " + this.version, 1);
+
         if (!fs.existsSync(vanillaAssetsDir) || !(await fs.promises.stat(vanillaAssetsDir)).isDirectory()) {
             await fs.promises.mkdir(vanillaAssetsDir);
         }
@@ -68,6 +71,7 @@ export default class VanillaAssets {
         const versionJar = path.resolve(minecraftDir, "versions", this.version, this.version + ".jar");
 
         if (!fs.existsSync(versionJar) || !(await fs.promises.stat(versionJar)).isFile()) {
+            processBar.fail();
             throw new Error("The minecraft jar for "+ this.version + " does not exist, have you ran it in the launcher once?");
         }
 
@@ -80,10 +84,18 @@ export default class VanillaAssets {
 
         console.log("Extracting jar... this might take a while");
 
+        let entryCount: number;
         await (function() {
             return new Promise<void>(function(resolve, reject) {
                 extract(dest, {
-                    dir: extractDir
+                    dir: extractDir,
+                    onEntry: function(entry, zipFile) {
+                        if (entryCount == undefined) {
+                            entryCount = zipFile.entryCount;
+                            processBar.setMax(entryCount);
+                        }
+                        processBar.increment();
+                    }
                 }, function(err) {
                     if (err) reject(err);
                     else resolve();
@@ -99,7 +111,11 @@ export default class VanillaAssets {
         console.log("    pack.png...");
         await fs.promises.rename(path.resolve(extractDir, "pack.png"), path.resolve(versionDir, "pack.png"));
         console.log("    pack.mcmeta...");
-        await fs.promises.rename(path.resolve(extractDir, "pack.mcmeta"), path.resolve(versionDir, "pack.mcmeta"));
+        try {
+            await fs.promises.rename(path.resolve(extractDir, "pack.mcmeta"), path.resolve(versionDir, "pack.mcmeta"));
+        } catch(e) {
+            console.log("No pack.mcmeta");
+        }
 
         console.log("Removing temporary files and folders");
 
@@ -108,6 +124,7 @@ export default class VanillaAssets {
         console.log("Deleteing "+ extractDir);
         await fs.promises.rmdir(extractDir, { recursive: true });
 
+        processBar.finish();
         console.log("All done!");
     }
 }
